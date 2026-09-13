@@ -1,0 +1,53 @@
+{
+  "name": "codex-usage-monitor",
+  "displayName": "Codex Usage Monitor",
+  "description": "Local, privacy-preserving observability for Codex rollout usage.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:codexUsage.analyzeCurrentSession"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codexUsage.analyzeCurrentSession",
+        "title": "Codex Usage: Analyze Latest Session"
+      }
+    ],
+    "configuration": {
+      "title": "Codex Usage",
+      "properties": {
+        "codexUsage.codexHome": {
+          "type": "string",
+          "default": "",
+          "description": "Codex home directory. Leave empty to auto-detect."
+        },
+        "codexUsage.enableDebugLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log rollout schema diagnostics without logging prompts or tool output."
+        },
+        "codexUsage.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show current Codex session total in the status bar."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "test": "npm run compile && node --test out/test/**/*.test.js",
+    "analyze": "npm run compile && node out/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/vscode": "^1.96.0",
+    "typescript": "^5.7.2"
+  }
+}
