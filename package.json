@@ -1,6 +1,6 @@
 {
   "name": "codex-rollout-usage-monitor",
-  "displayName": "Codex Usage Monitor",
+  "displayName": "Codex Rollout Insights",
   "description": "Local, privacy-preserving observability for Codex rollout usage.",
   "version": "1.0.0",
   "publisher": "ChanpreetKaur",

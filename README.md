@@ -1,4 +1,4 @@
-# Codex Usage Monitor
+# Codex Rollout Insights
 
 A local-first VS Code extension for observing raw Codex rollout token telemetry.
 It is deliberately **not** a ChatGPT quota, credits, or billing calculator.

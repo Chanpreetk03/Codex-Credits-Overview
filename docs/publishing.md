@@ -23,7 +23,7 @@ cannot be changed after creation.
 
 The Marketplace extension identifier is
 `ChanpreetKaur.codex-rollout-usage-monitor`. Its visible display name remains
-**Codex Usage Monitor**.
+**Codex Rollout Insights**.
 
 After registering and verifying the publisher, publish with the local `vsce`
 tool:
