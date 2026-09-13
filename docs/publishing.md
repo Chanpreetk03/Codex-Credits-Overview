@@ -17,10 +17,9 @@ updates.
 
 ## Marketplace publication
 
-Before publishing, replace the placeholder `publisher: "local"` in
-`package.json` with a registered Visual Studio Marketplace publisher ID. The
-publisher ID is independent of the GitHub account and cannot be changed after
-creation.
+The manifest uses the registered Visual Studio Marketplace publisher ID
+`ChanpreetKaur`. The publisher ID is independent of the GitHub account and
+cannot be changed after creation.
 
 After registering and verifying the publisher, publish with the local `vsce`
 tool:

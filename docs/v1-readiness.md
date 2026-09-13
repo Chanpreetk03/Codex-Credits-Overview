@@ -21,8 +21,8 @@
 - [ ] Run a manual installed-VSIX smoke test.
 - [x] Add Marketplace presentation metadata, support links, repository link,
   and a PNG icon at least 128x128.
-- [ ] Replace the placeholder `local` publisher with a registered Marketplace
-  publisher ID.
+- [x] Replace the placeholder `local` publisher with the registered Marketplace
+  publisher ID `ChanpreetKaur`.
 - [x] Validate partial-write and rotated-rollout parsing with automated tests.
 - [ ] Run an extension-host integration test against an installed VSIX.
 - [x] Bound catalog metadata parsing to a recent window and cache unchanged
@@ -30,7 +30,7 @@
 - [x] Complete a release/security review: production code has no network client
   or local-file write path, and the packaged archive contains runtime files and
   public documentation only.
-- [ ] Version the manifest `1.0.0` after the installed-VSIX smoke test and
+- [x] Version the manifest `1.0.0` after the installed-VSIX smoke test and
   publisher registration are complete.
 
 Rate limits, account quota/credits, and billing cost remain intentionally out of

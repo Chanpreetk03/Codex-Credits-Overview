@@ -2,8 +2,8 @@
   "name": "codex-usage-monitor",
   "displayName": "Codex Usage Monitor",
   "description": "Local, privacy-preserving observability for Codex rollout usage.",
-  "version": "0.1.0",
-  "publisher": "local",
+  "version": "1.0.0",
+  "publisher": "ChanpreetKaur",
   "license": "MIT",
   "icon": "media/marketplace-icon.png",
   "galleryBanner": {
