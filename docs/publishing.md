@@ -21,6 +21,10 @@ The manifest uses the registered Visual Studio Marketplace publisher ID
 `ChanpreetKaur`. The publisher ID is independent of the GitHub account and
 cannot be changed after creation.
 
+The Marketplace extension identifier is
+`ChanpreetKaur.codex-rollout-usage-monitor`. Its visible display name remains
+**Codex Usage Monitor**.
+
 After registering and verifying the publisher, publish with the local `vsce`
 tool:
 
