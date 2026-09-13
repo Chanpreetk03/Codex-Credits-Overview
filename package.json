@@ -9,13 +9,35 @@
     "vscode": "^1.96.0"
   },
   "categories": ["Other"],
-  "activationEvents": ["onCommand:codexUsage.analyzeCurrentSession"],
+  "activationEvents": ["onCommand:codexUsage.analyzeCurrentSession", "onView:codexUsage.dashboard"],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codexUsage",
+          "title": "Codex Usage",
+          "icon": "media/codex-usage.svg"
+        }
+      ]
+    },
+    "views": {
+      "codexUsage": [
+        {
+          "type": "webview",
+          "id": "codexUsage.dashboard",
+          "name": "Usage"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "codexUsage.analyzeCurrentSession",
         "title": "Codex Usage: Analyze Latest Session"
+      },
+      {
+        "command": "codexUsage.openDashboard",
+        "title": "Codex Usage: Open Dashboard"
       }
     ],
     "configuration": {

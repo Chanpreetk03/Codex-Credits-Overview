@@ -4,18 +4,22 @@ import { findLatestRollout } from "./codex/sessionScanner";
 import { RolloutWatcher } from "./codex/rolloutWatcher";
 import { SessionReport } from "./codex/types";
 import { formatTokens, formatUsage } from "./codex/usageAggregator";
+import { USAGE_VIEW_ID, UsageViewProvider } from "./ui/usageViewProvider";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const output = vscode.window.createOutputChannel("Codex Usage");
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  status.command = "codexUsage.analyzeCurrentSession";
+  status.command = "codexUsage.openDashboard";
   status.tooltip = "Codex raw model usage for the active local rollout";
   context.subscriptions.push(output);
   context.subscriptions.push(status);
+  const usageView = new UsageViewProvider();
+  context.subscriptions.push(vscode.window.registerWebviewViewProvider(USAGE_VIEW_ID, usageView));
   let latestReport: SessionReport | undefined;
 
   const render = (report: SessionReport): void => {
     latestReport = report;
+    usageView.setReport(report);
     const setting = vscode.workspace.getConfiguration("codexUsage").get<boolean>("showStatusBar", true);
     if (!setting) { status.hide(); return; }
     status.text = `$(pulse) Codex ${formatTokens(report.total.usage.totalTokens)}`;
@@ -55,6 +59,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
     if (latestReport.modelContextWindow) output.appendLine(`Context window capacity: ${formatTokens(latestReport.modelContextWindow)}; occupancy unavailable`);
     output.show(true);
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand("codexUsage.openDashboard", async () => {
+    await vscode.commands.executeCommand("workbench.view.extension.codexUsage");
+    usageView.setReport(latestReport);
   }));
 }
 
