@@ -27,7 +27,11 @@
 - [ ] Run an extension-host integration test against an installed VSIX.
 - [x] Bound catalog metadata parsing to a recent window and cache unchanged
   metadata during a VS Code session.
-- [ ] Make a final release/security review and version the manifest `1.0.0`.
+- [x] Complete a release/security review: production code has no network client
+  or local-file write path, and the packaged archive contains runtime files and
+  public documentation only.
+- [ ] Version the manifest `1.0.0` after the installed-VSIX smoke test and
+  publisher registration are complete.
 
 Rate limits, account quota/credits, and billing cost remain intentionally out of
 V1 until an authoritative supported Codex source is integrated.
