@@ -1,4 +1,5 @@
 .git/**
+.gitignore
 .github/**
 .vscode/**
 src/**
@@ -6,6 +7,7 @@ test/**
 docs/**
 node_modules/**
 out/**/*.map
+out/test/**
 tsconfig.json
 codex_usage_monitor_handoff.md
 *.vsix

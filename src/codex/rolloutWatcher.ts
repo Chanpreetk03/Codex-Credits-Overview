@@ -11,7 +11,7 @@ import { UsageAggregator } from "./usageAggregator";
 export class RolloutWatcher {
   private readonly updates = new EventEmitter();
   private state: IncrementalJsonlState = { offset: 0, remainder: "" };
-  private readonly aggregator = new UsageAggregator();
+  private aggregator = new UsageAggregator();
   private watcher?: FSWatcher;
   private debounce?: NodeJS.Timeout;
   private stopped = false;
@@ -53,6 +53,16 @@ export class RolloutWatcher {
   private async readAppend(): Promise<void> {
     try {
       const result = await parseAppendedRollout(this.filePath, this.state, (event) => this.aggregator.apply(event));
+      if (result.rotated) {
+        // A replacement rollout is a new document, not an append to the old one.
+        // Re-read it into a fresh aggregate so totals never span two files.
+        this.aggregator = new UsageAggregator();
+        const replay = await parseAppendedRollout(this.filePath, { offset: 0, remainder: "" }, (event) => this.aggregator.apply(event));
+        this.state = replay.state;
+        for (let index = 0; index < replay.malformedLines; index++) this.aggregator.addWarning();
+        this.updates.emit("update", this.aggregator.toReport());
+        return;
+      }
       this.state = result.state;
       for (let index = 0; index < result.malformedLines; index++) this.aggregator.addWarning();
       this.updates.emit("update", this.aggregator.toReport());

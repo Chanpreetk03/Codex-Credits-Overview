@@ -41,7 +41,7 @@ export async function parseAppendedRollout(
   filePath: string,
   state: IncrementalJsonlState,
   onEvent: (event: CodexEvent) => void
-): Promise<{ state: IncrementalJsonlState; malformedLines: number }> {
+): Promise<{ state: IncrementalJsonlState; malformedLines: number; rotated: boolean }> {
   const file = await stat(filePath);
   const rotated = file.size < state.offset;
   const start = rotated ? 0 : state.offset;
@@ -56,5 +56,5 @@ export async function parseAppendedRollout(
     if (!line.trim()) continue;
     try { onEvent(normalizeEvent(JSON.parse(line))); } catch { malformedLines++; }
   }
-  return { state: { offset: file.size, remainder }, malformedLines };
+  return { state: { offset: file.size, remainder }, malformedLines, rotated };
 }

@@ -17,15 +17,16 @@
 
 ## Required before Marketplace 1.0
 
-- [ ] Package a VSIX using `@vscode/vsce` and run an install/smoke test.
-- [ ] Add Marketplace presentation metadata, support links, repository link,
+- [x] Package a VSIX using `@vscode/vsce`.
+- [ ] Run a manual installed-VSIX smoke test.
+- [x] Add Marketplace presentation metadata, support links, repository link,
   and a PNG icon at least 128x128.
 - [ ] Replace the placeholder `local` publisher with a registered Marketplace
   publisher ID.
-- [ ] Add an extension-host integration test and validate the Windows watcher
-  against new/rotated rollout files.
-- [ ] Add a bounded metadata cache so large session directories do not require
-  a full startup metadata scan.
+- [x] Validate partial-write and rotated-rollout parsing with automated tests.
+- [ ] Run an extension-host integration test against an installed VSIX.
+- [x] Bound catalog metadata parsing to a recent window and cache unchanged
+  metadata during a VS Code session.
 - [ ] Make a final release/security review and version the manifest `1.0.0`.
 
 Rate limits, account quota/credits, and billing cost remain intentionally out of

@@ -7,6 +7,7 @@ import { analyzeRecentSessions, analyzeRollout } from "../codex/sessionScanner";
 import { normalizeEvent } from "../codex/eventNormalizer";
 import { buildTurnTimeline } from "../codex/turnTimeline";
 import { ThreadCatalog } from "../codex/threadCatalog";
+import { parseAppendedRollout } from "../codex/rolloutParser";
 
 test("uses Codex-reported turn and thread totals without double counting subsets", async () => {
   const report = await analyzeRollout(join(process.cwd(), "src", "test", "fixtures", "simple-rollout.jsonl"));
@@ -104,6 +105,30 @@ test("thread catalog hides internal sub-agent threads unless explicitly requeste
     const all = await catalog.list({ includeInternal: true, includeNames: true });
     assert.equal(all.length, 2);
     assert.equal(all.find((thread) => thread.id === "user-thread")?.displayName, "Prompt-derived title");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("incremental rollout parsing retains partial records and signals a replacement file", async () => {
+  const root = join(tmpdir(), `codex-usage-rollout-${Date.now()}`);
+  const rollout = join(root, "rollout.jsonl");
+  await mkdir(root, { recursive: true });
+  try {
+    const first = JSON.stringify({ type: "session_meta", payload: { session_id: "first", source: "vscode" } });
+    await writeFile(rollout, first.slice(0, 20));
+    const events = [];
+    let result = await parseAppendedRollout(rollout, { offset: 0, remainder: "" }, (event) => events.push(event));
+    assert.equal(events.length, 0);
+    await writeFile(rollout, `${first.slice(20)}\n`, { flag: "a" });
+    result = await parseAppendedRollout(rollout, result.state, (event) => events.push(event));
+    assert.equal(events.length, 1);
+    assert.equal(result.rotated, false);
+
+    const replacement = `${JSON.stringify({ type: "session_meta", payload: { session_id: "new", source: "vscode" } })}\n`;
+    await writeFile(rollout, replacement);
+    const rotated = await parseAppendedRollout(rollout, result.state, () => undefined);
+    assert.equal(rotated.rotated, true);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

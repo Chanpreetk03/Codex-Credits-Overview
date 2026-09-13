@@ -16,6 +16,8 @@ export interface ThreadCatalogOptions {
 
 /** A read-only catalog of durable Codex threads. It never loads transcripts or prompt content. */
 export class ThreadCatalog {
+  private readonly metadataCache = new Map<string, { mtimeMs: number; metadata?: SessionMetaEvent & { model?: string } }>();
+
   constructor(private readonly sessionsDirectory: string, private readonly sessionIndexPath?: string) {}
 
   async list(options: ThreadCatalogOptions = {}): Promise<ObservedThread[]> {
@@ -23,8 +25,17 @@ export class ThreadCatalog {
     const files = await rolloutFiles(this.sessionsDirectory);
     const candidates = await Promise.all(files.map(async (rolloutPath) => ({ rolloutPath, updatedAt: (await stat(rolloutPath)).mtimeMs })));
     const selected = new Map<string, ObservedThread>();
-    for (const candidate of candidates.sort((left, right) => right.updatedAt - left.updatedAt)) {
-      const meta = await readRolloutMetadata(candidate.rolloutPath);
+    // Listing may stat many files, but parsing is bounded to a recent window and
+    // unchanged metadata is reused across refreshes.
+    const scanLimit = Math.max((options.limit ?? 20) * 5, 100);
+    const recent = candidates.sort((left, right) => right.updatedAt - left.updatedAt).slice(0, scanLimit);
+    const retainedPaths = new Set(candidates.map((candidate) => candidate.rolloutPath));
+    for (const cachedPath of this.metadataCache.keys()) if (!retainedPaths.has(cachedPath)) this.metadataCache.delete(cachedPath);
+    for (const candidate of recent) {
+      const cached = this.metadataCache.get(candidate.rolloutPath);
+      const meta = cached?.mtimeMs === candidate.updatedAt
+        ? cached.metadata
+        : await this.refreshMetadata(candidate.rolloutPath, candidate.updatedAt);
       if (!meta?.sessionId) continue;
       const source = meta.source ?? "unknown";
       if (!options.includeInternal && source === "subagent") continue;
@@ -42,6 +53,12 @@ export class ThreadCatalog {
       if (options.limit && selected.size >= options.limit) break;
     }
     return [...selected.values()];
+  }
+
+  private async refreshMetadata(filePath: string, mtimeMs: number): Promise<(SessionMetaEvent & { model?: string }) | undefined> {
+    const metadata = await readRolloutMetadata(filePath);
+    this.metadataCache.set(filePath, { mtimeMs, metadata });
+    return metadata;
   }
 }
 

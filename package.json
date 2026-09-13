@@ -5,11 +5,31 @@
   "version": "0.1.0",
   "publisher": "local",
   "license": "MIT",
+  "icon": "media/marketplace-icon.png",
+  "galleryBanner": {
+    "color": "#0F172A",
+    "theme": "dark"
+  },
+  "pricing": "Free",
+  "keywords": ["codex", "openai", "usage", "tokens", "observability", "privacy"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Chanpreetk03/Codex-Credits-Overview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Chanpreetk03/Codex-Credits-Overview/issues"
+  },
+  "homepage": "https://github.com/Chanpreetk03/Codex-Credits-Overview#readme",
   "engines": {
     "vscode": "^1.96.0"
   },
-  "categories": ["Other"],
-  "activationEvents": ["onCommand:codexUsage.analyzeCurrentSession", "onView:codexUsage.dashboard"],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:codexUsage.analyzeCurrentSession",
+    "onView:codexUsage.dashboard"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -122,11 +142,14 @@
     "compile": "tsc -p .",
     "watch": "tsc -w -p .",
     "test": "npm run compile && node --test out/test/**/*.test.js",
-    "analyze": "npm run compile && node out/cli.js"
+    "analyze": "npm run compile && node out/cli.js",
+    "vscode:prepublish": "npm test",
+    "package": "vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.9.2",
     "typescript": "^5.7.2"
   }
 }

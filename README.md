@@ -3,8 +3,9 @@
 A local-first VS Code extension for observing raw Codex rollout token telemetry.
 It is deliberately **not** a ChatGPT quota, credits, or billing calculator.
 
-> Status: functional V1 alpha. See [V1 readiness](docs/v1-readiness.md) for the
-> remaining Marketplace-release work.
+> Status: functional V1 alpha with a packaged VSIX. See
+> [V1 readiness](docs/v1-readiness.md) for the remaining Marketplace-release
+> work.
 
 ## Current implementation
 
