@@ -36,9 +36,12 @@ multi-gigabyte files manageable without loading a rollout into memory.
 
 1. Completed: extension scaffold, normalized event model, streaming analyzer,
    bigint-safe accounting, real-format fixture, and tests.
-2. Next: persist incremental parser offsets and build the scoped rollout watcher.
-3. Then: status bar and sidebar backed only by the normalized live state.
-4. Finally: metadata-only session history. Rate-limit/app-server work remains a
+2. Completed: a scoped active-rollout watcher, status bar, dashboard, and
+   bounded metadata-only history scan.
+3. In progress: a per-workspace selected-thread tree that separates user prompt
+   turns from agent inference/tool activity for machines with concurrent Codex
+   sessions.
+4. Future: persistent history storage. Rate-limit/app-server work remains a
    separately validated future milestone.
 
 The protocol does document a `thread/tokenUsage/updated` notification for rich

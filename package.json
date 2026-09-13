@@ -27,6 +27,11 @@
           "type": "webview",
           "id": "codexUsage.dashboard",
           "name": "Usage"
+        },
+        {
+          "type": "tree",
+          "id": "codexUsage.sessions",
+          "name": "Sessions"
         }
       ]
     },
@@ -38,8 +43,36 @@
       {
         "command": "codexUsage.openDashboard",
         "title": "Codex Usage: Open Dashboard"
+      },
+      {
+        "command": "codexUsage.refreshHistory",
+        "title": "Codex Usage: Refresh Sessions",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "codexUsage.selectSession",
+        "title": "Codex Usage: Select Observed Session",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "codexUsage.selectThread",
+        "title": "Codex Usage: Select Session"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "codexUsage.refreshHistory",
+          "when": "view == codexUsage.dashboard",
+          "group": "navigation@1"
+        },
+        {
+          "command": "codexUsage.selectSession",
+          "when": "view == codexUsage.dashboard",
+          "group": "navigation@2"
+        }
+      ]
+    },
     "configuration": {
       "title": "Codex Usage",
       "properties": {
@@ -57,6 +90,30 @@
           "type": "boolean",
           "default": true,
           "description": "Show current Codex session total in the status bar."
+        },
+        "codexUsage.historySessionLimit": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum number of most-recent sessions to scan when refreshing session history."
+        },
+        "codexUsage.showSessionNames": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show local Codex session names. Names can contain prompt-derived text."
+        },
+        "codexUsage.showPromptPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a short local preview for each user prompt. Prompt text is otherwise hidden."
+        },
+        "codexUsage.promptPreviewLength": {
+          "type": "number",
+          "default": 160,
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum prompt-preview length when previews are enabled."
         }
       }
     }

@@ -1,7 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { parseRolloutFile } from "./rolloutParser";
-import { SessionReport } from "./types";
+import { SessionHistoryEntry, SessionReport } from "./types";
 import { UsageAggregator } from "./usageAggregator";
 
 async function rolloutFiles(directory: string): Promise<string[]> {
@@ -15,13 +15,7 @@ async function rolloutFiles(directory: string): Promise<string[]> {
 }
 
 export async function findLatestRollout(sessionsDirectory: string): Promise<string | undefined> {
-  const files = await rolloutFiles(sessionsDirectory);
-  let latest: { path: string; mtimeMs: number } | undefined;
-  for (const path of files) {
-    const details = await stat(path);
-    if (!latest || details.mtimeMs > latest.mtimeMs) latest = { path, mtimeMs: details.mtimeMs };
-  }
-  return latest?.path;
+  return (await mostRecentRollouts(sessionsDirectory, 1))[0]?.path;
 }
 
 export async function analyzeRollout(filePath: string): Promise<SessionReport> {
@@ -36,4 +30,30 @@ export async function analyzeSessions(sessionsDirectory: string): Promise<Sessio
   const reports: SessionReport[] = [];
   for (const file of files) reports.push(await analyzeRollout(file));
   return reports;
+}
+
+export async function analyzeRecentSessions(sessionsDirectory: string, limit = 20): Promise<SessionHistoryEntry[]> {
+  const candidates = await mostRecentRollouts(sessionsDirectory, limit);
+  const history: SessionHistoryEntry[] = [];
+  for (const candidate of candidates) {
+    const report = await analyzeRollout(candidate.path);
+    history.push({
+      rolloutPath: candidate.path,
+      sessionId: report.sessionId,
+      cwd: report.cwd,
+      model: report.models.at(-1),
+      totalTokens: report.total.usage.totalTokens,
+      inferenceCalls: report.inferenceCalls,
+      lastActivityAt: candidate.mtimeMs,
+      source: report.total.source,
+      confidence: report.total.confidence
+    });
+  }
+  return history;
+}
+
+async function mostRecentRollouts(sessionsDirectory: string, limit: number): Promise<Array<{ path: string; mtimeMs: number }>> {
+  const files = await rolloutFiles(sessionsDirectory);
+  const candidates = await Promise.all(files.map(async (path) => ({ path, mtimeMs: (await stat(path)).mtimeMs })));
+  return candidates.sort((left, right) => right.mtimeMs - left.mtimeMs).slice(0, limit);
 }

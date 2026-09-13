@@ -15,6 +15,7 @@ function metric(label: string, value?: bigint): string {
 export class UsageViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private report?: SessionReport;
+  private selectionLabel = "Following newest observed session";
 
   resolveWebviewView(view: vscode.WebviewView): void {
     this.view = view;
@@ -24,6 +25,11 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
 
   setReport(report: SessionReport | undefined): void {
     this.report = report;
+    this.render();
+  }
+
+  setSelectionLabel(label: string): void {
+    this.selectionLabel = label;
     this.render();
   }
 
@@ -42,7 +48,7 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
     const context = report.modelContextWindow
       ? `${formatTokens(report.modelContextWindow)} capacity <span class="muted">— occupancy unavailable</span>`
       : "N/A";
-    const body = `<section><h2>Current turn</h2>${turnBody}</section><section><h2>Current session</h2><p class="model">${escapeHtml(report.models.at(-1) ?? "Model unavailable")}</p><p class="muted">${report.inferenceCalls} observed inference calls</p>${this.metrics(total)}<p class="source">Codex rollout telemetry · ${escapeHtml(report.total.source.replaceAll("_", " "))} · ${escapeHtml(report.total.confidence)}</p></section><section><h2>Context window</h2><p class="context">${context}</p></section><section><h2>Rate limits</h2><p class="muted">N/A — local rollout telemetry does not authoritatively provide account limits.</p></section><p class="privacy">Local-only. Prompt and tool-output contents are not displayed or stored.</p>`;
+    const body = `<section><h2>Current turn</h2>${turnBody}</section><section><h2>Selected session</h2><p class="muted">${escapeHtml(this.selectionLabel)}</p><p class="model">${escapeHtml(report.models.at(-1) ?? "Model unavailable")}</p><p class="muted">${report.inferenceCalls} observed inference calls</p>${this.metrics(total)}<p class="source">Codex rollout telemetry · ${escapeHtml(report.total.source.replaceAll("_", " "))} · ${escapeHtml(report.total.confidence)}</p></section><section><h2>Context window</h2><p class="context">${context}</p></section><section><h2>Session activity</h2><p class="muted">Use the Sessions tree below to select a session and expand its prompts, agent inferences, and tool activity.</p></section><section><h2>Rate limits</h2><p class="muted">N/A — local rollout telemetry does not authoritatively provide account limits.</p></section><p class="privacy">Local-only. Prompt and tool-output contents are not displayed or stored.</p>`;
     this.view.webview.html = this.page(body);
   }
 

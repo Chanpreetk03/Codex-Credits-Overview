@@ -1,0 +1,11 @@
+.git/**
+.github/**
+.vscode/**
+src/**
+test/**
+docs/**
+node_modules/**
+out/**/*.map
+tsconfig.json
+codex_usage_monitor_handoff.md
+*.vsix
