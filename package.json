@@ -2,7 +2,7 @@
   "name": "codex-rollout-usage-monitor",
   "displayName": "Codex Rollout Insights",
   "description": "Local, privacy-preserving observability for Codex rollout usage.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "ChanpreetKaur",
   "license": "MIT",
   "icon": "media/marketplace-icon.png",

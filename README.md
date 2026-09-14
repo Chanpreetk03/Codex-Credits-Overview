@@ -3,9 +3,8 @@
 A local-first VS Code extension for observing raw Codex rollout token telemetry.
 It is deliberately **not** a ChatGPT quota, credits, or billing calculator.
 
-> Status: functional V1 alpha with a packaged VSIX. See
-> [V1 readiness](docs/v1-readiness.md) for the remaining Marketplace-release
-> work.
+> Status: version 1.1.0 release candidate. See the [roadmap](docs/roadmap.md)
+> for planned work.
 
 ## Current implementation
 
@@ -78,3 +77,9 @@ send prompts. The Codex CLI must already be authenticated. If account
 authentication is unavailable, the dashboard keeps account limits unavailable.
 See the [V2 app-server design](docs/v2-app-server.md) for the protocol and
 privacy boundary.
+
+## Roadmap
+
+Planned work is recorded in [docs/roadmap.md](docs/roadmap.md). The priorities
+are better local session exploration, opt-in real-time reconciliation, and
+release automation—without treating raw local tokens as billing or quota data.

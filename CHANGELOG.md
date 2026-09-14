@@ -2,12 +2,22 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [1.1.0] - 2026-09-14
 
 ### Added
 
 - Opt-in local Codex app-server client for authoritative account rate limits.
 - Schema-validated decoding for app-server thread token-usage notifications.
+- Automatic Windows detection of the Codex executable bundled with the official
+  VS Code extension, so an otherwise missing shell `PATH` does not block setup.
+- Standard 5-hour and weekly account-limit labels, reset countdowns, and an
+  explicit used-versus-remaining percentage display.
+
+### Changed
+
+- Compact the dashboard metrics and reset its scroll position after refresh.
+
+## [Unreleased]
 
 ## [1.0.0] - 2026-09-13
 
