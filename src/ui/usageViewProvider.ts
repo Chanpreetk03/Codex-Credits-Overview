@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { SessionReport } from "../codex/types";
 import { formatTokens } from "../codex/usageAggregator";
+import { AppServerRateLimits, RateLimitWindow } from "../codex/appServerProtocol";
 
 export const USAGE_VIEW_ID = "codexUsage.dashboard";
 
@@ -15,6 +16,7 @@ function metric(label: string, value?: bigint): string {
 export class UsageViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private report?: SessionReport;
+  private rateLimits?: AppServerRateLimits;
   private selectionLabel = "Following newest observed session";
 
   resolveWebviewView(view: vscode.WebviewView): void {
@@ -30,6 +32,11 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
 
   setSelectionLabel(label: string): void {
     this.selectionLabel = label;
+    this.render();
+  }
+
+  setRateLimits(rateLimits: AppServerRateLimits | undefined): void {
+    this.rateLimits = rateLimits;
     this.render();
   }
 
@@ -49,11 +56,25 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
       ? `${formatTokens(report.modelContextWindow)} capacity <span class="muted">— occupancy unavailable</span>`
       : "N/A";
     const body = `<section><h2>Current turn</h2>${turnBody}</section><section><h2>Selected session</h2><p class="muted">${escapeHtml(this.selectionLabel)}</p><p class="model">${escapeHtml(report.models.at(-1) ?? "Model unavailable")}</p><p class="muted">${report.inferenceCalls} observed inference calls</p>${this.metrics(total)}<p class="source">Codex rollout telemetry · ${escapeHtml(report.total.source.replaceAll("_", " "))} · ${escapeHtml(report.total.confidence)}</p></section><section><h2>Context window</h2><p class="context">${context}</p></section><section><h2>Session activity</h2><p class="muted">Use the Sessions tree below to select a session and expand its prompts, agent inferences, and tool activity.</p></section><section><h2>Rate limits</h2><p class="muted">N/A — local rollout telemetry does not authoritatively provide account limits.</p></section><p class="privacy">Local-only. Prompt and tool-output contents are not displayed or stored.</p>`;
-    this.view.webview.html = this.page(body);
+    const renderedBody = body.replace(/<section><h2>Rate limits<\/h2>.*?<\/section>/, `<section><h2>Rate limits</h2>${this.rateLimitBody()}</section>`);
+    this.view.webview.html = this.page(renderedBody);
   }
 
   private metrics(usage: SessionReport["total"]["usage"]): string {
     return `<div class="metrics">${metric("Input", usage.inputTokens)}${metric("Cached input", usage.cachedInputTokens)}${metric("Cache-write", usage.cacheWriteInputTokens)}${metric("Output", usage.outputTokens)}${metric("Reasoning", usage.reasoningOutputTokens)}${metric("Total", usage.totalTokens)}</div>`;
+  }
+
+  private rateLimitBody(): string {
+    if (!this.rateLimits) return "<p class=\"muted\">Unavailable. Enable app-server integration to request authoritative account limits.</p>";
+    const label = [this.rateLimits.limitName, this.rateLimits.planType].filter((value): value is string => Boolean(value)).map(escapeHtml).join(" · ");
+    return `<p class="model">${label || "Codex account"}</p><div class="metrics">${this.rateLimitMetric("Primary", this.rateLimits.primary)}${this.rateLimitMetric("Secondary", this.rateLimits.secondary)}</div><p class="source">Codex app-server · authoritative account telemetry</p>`;
+  }
+
+  private rateLimitMetric(label: string, window: RateLimitWindow | undefined): string {
+    if (!window) return "";
+    const reset = window.resetsAt ? ` · resets ${escapeHtml(new Date(window.resetsAt * 1000).toLocaleString())}` : "";
+    const duration = window.windowDurationMins ? ` (${window.windowDurationMins} min)` : "";
+    return `<div class="metric"><span>${label}${duration}</span><strong>${window.usedPercent}%</strong></div><p class="muted">${reset}</p>`;
   }
 
   private page(body: string): string {

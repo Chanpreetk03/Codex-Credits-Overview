@@ -8,6 +8,7 @@ import { normalizeEvent } from "../codex/eventNormalizer";
 import { buildTurnTimeline } from "../codex/turnTimeline";
 import { ThreadCatalog } from "../codex/threadCatalog";
 import { parseAppendedRollout } from "../codex/rolloutParser";
+import { decodeRateLimits, decodeThreadUsageUpdate } from "../codex/appServerProtocol";
 
 test("uses Codex-reported turn and thread totals without double counting subsets", async () => {
   const report = await analyzeRollout(join(process.cwd(), "src", "test", "fixtures", "simple-rollout.jsonl"));
@@ -132,4 +133,27 @@ test("incremental rollout parsing retains partial records and signals a replacem
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("decodes documented app-server thread usage without mixing it into rollout totals", () => {
+  const update = decodeThreadUsageUpdate({ method: "thread/tokenUsage/updated", params: {
+    threadId: "thread-1", turnId: "turn-1", tokenUsage: {
+      last: { inputTokens: 30, cachedInputTokens: 20, cacheWriteInputTokens: 0, outputTokens: 10, reasoningOutputTokens: 4, totalTokens: 40 },
+      total: { inputTokens: 100, cachedInputTokens: 60, cacheWriteInputTokens: 0, outputTokens: 30, reasoningOutputTokens: 12, totalTokens: 130 },
+      modelContextWindow: 258400
+    }
+  }});
+  assert.equal(update?.threadId, "thread-1");
+  assert.equal(update?.total.usage.totalTokens, 130n);
+  assert.equal(update?.last.source, "app_server");
+  assert.equal(update?.modelContextWindow, 258400n);
+});
+
+test("decodes the authoritative Codex rate-limit bucket and rejects invalid percentages", () => {
+  const limits = decodeRateLimits({ rateLimitsByLimitId: {
+    other: { primary: { usedPercent: 9 } },
+    codex: { planType: "plus", limitName: "Codex", primary: { usedPercent: 31, resetsAt: 1730948100, windowDurationMins: 15 }, secondary: { usedPercent: 45 } }
+  }}, 1);
+  assert.deepEqual(limits, { planType: "plus", limitName: "Codex", primary: { usedPercent: 31, resetsAt: 1730948100, windowDurationMins: 15 }, secondary: { usedPercent: 45 }, capturedAt: 1 });
+  assert.equal(decodeRateLimits({ rateLimits: { primary: { usedPercent: 101 } } }), undefined);
 });

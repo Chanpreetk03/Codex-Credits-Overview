@@ -1,4 +1,4 @@
-export type UsageSource = "rollout_token_count" | "rollout_inference_usage" | "derived";
+export type UsageSource = "rollout_token_count" | "rollout_inference_usage" | "app_server" | "derived";
 export type UsageConfidence = "exact" | "high" | "estimated" | "ambiguous";
 
 export interface TokenUsage {

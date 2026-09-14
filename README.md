@@ -67,3 +67,14 @@ number of recent sessions (20 by default), hides sub-agent/internal threads by
 default, and stores no prompt or tool-output contents. Local session names and
 prompt previews are opt-in settings because either may contain prompt-derived
 text.
+
+## Optional authoritative account limits
+
+V2 begins an opt-in integration with the local Codex app-server. Enable
+`codexUsage.enableAppServer`, then run **Codex Usage: Refresh Account Rate
+Limits**. This starts a separate local app-server and makes the documented
+read-only account request; it does not attach to the Codex VS Code extension or
+send prompts. The Codex CLI must already be authenticated. If account
+authentication is unavailable, the dashboard keeps account limits unavailable.
+See the [V2 app-server design](docs/v2-app-server.md) for the protocol and
+privacy boundary.

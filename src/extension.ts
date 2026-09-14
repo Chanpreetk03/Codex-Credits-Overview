@@ -4,6 +4,7 @@ import { codexSessionsPath, hasCodexSessions, resolveCodexHome } from "./codex/c
 import { ThreadCatalog } from "./codex/threadCatalog";
 import { buildTurnTimeline } from "./codex/turnTimeline";
 import { RolloutWatcher } from "./codex/rolloutWatcher";
+import { CodexAppServerClient } from "./codex/appServerClient";
 import { ObservedThread, SessionReport } from "./codex/types";
 import { formatTokens, formatUsage } from "./codex/usageAggregator";
 import { SessionTreeProvider } from "./ui/sessionTreeProvider";
@@ -28,6 +29,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   let selectedThread: ObservedThread | undefined;
   let activeWatcher: RolloutWatcher | undefined;
   let timelineTimer: NodeJS.Timeout | undefined;
+  let appServer: CodexAppServerClient | undefined;
 
   const configuredHome = vscode.workspace.getConfiguration("codexUsage").get<string>("codexHome");
   const home = resolveCodexHome(configuredHome);
@@ -80,6 +82,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     await refreshTimeline();
   };
   context.subscriptions.push({ dispose: () => { activeWatcher?.dispose(); if (timelineTimer) clearTimeout(timelineTimer); } });
+  context.subscriptions.push({ dispose: () => appServer?.dispose() });
+
+  const refreshRateLimits = async (): Promise<void> => {
+    const config = vscode.workspace.getConfiguration("codexUsage");
+    if (!config.get<boolean>("enableAppServer", false)) {
+      void vscode.window.showInformationMessage("Codex Usage: enable App Server Integration before requesting account limits.");
+      return;
+    }
+    appServer ??= new CodexAppServerClient(config.get<string>("appServerCommand", "codex"));
+    try {
+      usageView.setRateLimits(await appServer.readRateLimits());
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const authenticationRequired = /authentication required/i.test(message);
+      output.appendLine(authenticationRequired
+        ? "INFO: Codex app-server requires an authenticated Codex CLI session before it can read account limits."
+        : "WARN: Codex app-server rate limits are temporarily unavailable.");
+      if (authenticationRequired) void vscode.window.showInformationMessage("Codex Usage: sign in to the Codex CLI before requesting account rate limits.");
+      usageView.setRateLimits(undefined);
+    }
+  };
 
   const selectThread = async (threadId: string, pinned = true): Promise<void> => {
     let thread = threads.find((candidate) => candidate.id === threadId);
@@ -105,6 +128,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       output.appendLine("WARN: Could not initialize the local Codex thread catalog.");
     }
   }
+  if (vscode.workspace.getConfiguration("codexUsage").get<boolean>("enableAppServer", false)) void refreshRateLimits();
 
   context.subscriptions.push(vscode.commands.registerCommand("codexUsage.selectThread", async (threadId: string) => selectThread(threadId, true)));
   context.subscriptions.push(vscode.commands.registerCommand("codexUsage.refreshHistory", async () => {
@@ -124,6 +148,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     await vscode.commands.executeCommand("workbench.view.extension.codexUsage");
     usageView.setReport(latestReport);
   }));
+  context.subscriptions.push(vscode.commands.registerCommand("codexUsage.refreshRateLimits", refreshRateLimits));
   context.subscriptions.push(vscode.commands.registerCommand("codexUsage.analyzeCurrentSession", async () => {
     if (!latestReport) {
       void vscode.window.showInformationMessage(`Codex Usage: no observable rollout is available under ${sessionsDirectory}.`);

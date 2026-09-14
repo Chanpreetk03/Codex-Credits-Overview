@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Opt-in local Codex app-server client for authoritative account rate limits.
+- Schema-validated decoding for app-server thread token-usage notifications.
+
 ## [1.0.0] - 2026-09-13
 
 ### Added
