@@ -13,6 +13,17 @@ function metric(label: string, value?: bigint): string {
   return `<div class="metric"><span>${label}</span><strong>${value === undefined ? "N/A" : formatTokens(value)}</strong></div>`;
 }
 
+function formatReset(resetsAt: number): string {
+  const milliseconds = resetsAt * 1_000 - Date.now();
+  if (milliseconds <= 0) return "resets shortly";
+  const minutes = Math.ceil(milliseconds / 60_000);
+  const days = Math.floor(minutes / 1_440);
+  const hours = Math.floor((minutes % 1_440) / 60);
+  const remainingMinutes = minutes % 60;
+  const relative = [days ? `${days}d` : "", hours ? `${hours}h` : "", (!days && remainingMinutes) ? `${remainingMinutes}m` : ""].filter(Boolean).join(" ");
+  return `resets in ${relative || "under 1m"}`;
+}
+
 export class UsageViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private report?: SessionReport;
@@ -55,7 +66,7 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
     const context = report.modelContextWindow
       ? `${formatTokens(report.modelContextWindow)} capacity <span class="muted">— occupancy unavailable</span>`
       : "N/A";
-    const body = `<section><h2>Current turn</h2>${turnBody}</section><section><h2>Selected session</h2><p class="muted">${escapeHtml(this.selectionLabel)}</p><p class="model">${escapeHtml(report.models.at(-1) ?? "Model unavailable")}</p><p class="muted">${report.inferenceCalls} observed inference calls</p>${this.metrics(total)}<p class="source">Codex rollout telemetry · ${escapeHtml(report.total.source.replaceAll("_", " "))} · ${escapeHtml(report.total.confidence)}</p></section><section><h2>Context window</h2><p class="context">${context}</p></section><section><h2>Session activity</h2><p class="muted">Use the Sessions tree below to select a session and expand its prompts, agent inferences, and tool activity.</p></section><section><h2>Rate limits</h2><p class="muted">N/A — local rollout telemetry does not authoritatively provide account limits.</p></section><p class="privacy">Local-only. Prompt and tool-output contents are not displayed or stored.</p>`;
+    const body = `<section><h2>Current turn</h2>${turnBody}</section><section><h2>Selected session</h2><p class="muted">${escapeHtml(this.selectionLabel)}</p><p class="model">${escapeHtml(report.models.at(-1) ?? "Model unavailable")}</p><p class="muted">${report.inferenceCalls} observed inference calls</p>${this.metrics(total)}<p class="source">Codex rollout telemetry · ${escapeHtml(report.total.source.replaceAll("_", " "))} · ${escapeHtml(report.total.confidence)}</p></section><section><h2>Context window</h2><p class="context">${context}</p></section><p class="activity muted">Use the Sessions tree below to select a session and expand prompts, agent inferences, and tool activity.</p><section><h2>Rate limits</h2><p class="muted">N/A — local rollout telemetry does not authoritatively provide account limits.</p></section><p class="privacy">Local-only. Prompt and tool-output contents are not displayed or stored.</p>`;
     const renderedBody = body.replace(/<section><h2>Rate limits<\/h2>.*?<\/section>/, `<section><h2>Rate limits</h2>${this.rateLimitBody()}</section>`);
     this.view.webview.html = this.page(renderedBody);
   }
@@ -72,11 +83,11 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
 
   private rateLimitMetric(label: string, window: RateLimitWindow | undefined): string {
     if (!window) return "";
-    const reset = window.resetsAt ? ` · resets ${escapeHtml(new Date(window.resetsAt * 1000).toLocaleString())}` : "";
+    const reset = window.resetsAt ? ` · ${formatReset(window.resetsAt)} (${escapeHtml(new Date(window.resetsAt * 1_000).toLocaleString())})` : "";
     return `<div class="metric"><span>${rateLimitLabel(window, label)}</span><strong>${window.usedPercent}%</strong></div><p class="muted">${reset}</p>`;
   }
 
   private page(body: string): string {
-    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{color:var(--vscode-foreground);font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);margin:0;padding:12px}section{border-bottom:1px solid var(--vscode-widget-border);padding:0 0 14px;margin:0 0 14px}h2{font-size:11px;letter-spacing:.08em;margin:0 0 9px;text-transform:uppercase}p{margin:5px 0}.model{font-weight:600}.muted,.source,.privacy{color:var(--vscode-descriptionForeground);font-size:12px}.metrics{display:grid;gap:4px;margin-top:10px}.metric{display:flex;justify-content:space-between}.metric strong{font-variant-numeric:tabular-nums}.source{margin-top:11px}.privacy{line-height:1.4}.empty{color:var(--vscode-descriptionForeground);line-height:1.5}.context{font-weight:600}</style></head><body>${body}</body></html>`;
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>html{scrollbar-color:var(--vscode-scrollbarSlider-background) transparent;scrollbar-width:thin}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--vscode-scrollbarSlider-background)}body{color:var(--vscode-foreground);font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);margin:0;padding:10px 12px}section{border-bottom:1px solid var(--vscode-widget-border);padding:0 0 10px;margin:0 0 10px}h2{font-size:11px;letter-spacing:.08em;margin:0 0 7px;text-transform:uppercase}p{margin:4px 0}.model{font-weight:600}.muted,.source,.privacy{color:var(--vscode-descriptionForeground);font-size:12px}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:4px;margin-top:8px}.metric{display:flex;gap:6px;justify-content:space-between;min-width:0}.metric span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.metric strong{font-variant-numeric:tabular-nums;white-space:nowrap}.source{margin-top:8px}.privacy,.activity{line-height:1.35}.activity{margin:0 0 10px}.empty{color:var(--vscode-descriptionForeground);line-height:1.5}.context{font-weight:600}</style></head><body>${body}</body></html>`;
   }
 }
