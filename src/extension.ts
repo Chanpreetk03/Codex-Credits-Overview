@@ -5,6 +5,7 @@ import { ThreadCatalog } from "./codex/threadCatalog";
 import { buildTurnTimeline } from "./codex/turnTimeline";
 import { RolloutWatcher } from "./codex/rolloutWatcher";
 import { CodexAppServerClient } from "./codex/appServerClient";
+import { resolveAppServerCommand } from "./codex/appServerCommand";
 import { ObservedThread, SessionReport } from "./codex/types";
 import { formatTokens, formatUsage } from "./codex/usageAggregator";
 import { SessionTreeProvider } from "./ui/sessionTreeProvider";
@@ -90,7 +91,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       void vscode.window.showInformationMessage("Codex Usage: enable App Server Integration before requesting account limits.");
       return;
     }
-    appServer ??= new CodexAppServerClient(config.get<string>("appServerCommand", "codex"));
+    appServer ??= new CodexAppServerClient(resolveAppServerCommand(config.get<string>("appServerCommand", "")));
     try {
       usageView.setRateLimits(await appServer.readRateLimits());
     } catch (error) {

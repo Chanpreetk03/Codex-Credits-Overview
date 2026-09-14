@@ -9,6 +9,7 @@ import { buildTurnTimeline } from "../codex/turnTimeline";
 import { ThreadCatalog } from "../codex/threadCatalog";
 import { parseAppendedRollout } from "../codex/rolloutParser";
 import { decodeRateLimits, decodeThreadUsageUpdate } from "../codex/appServerProtocol";
+import { resolveAppServerCommand } from "../codex/appServerCommand";
 
 test("uses Codex-reported turn and thread totals without double counting subsets", async () => {
   const report = await analyzeRollout(join(process.cwd(), "src", "test", "fixtures", "simple-rollout.jsonl"));
@@ -156,4 +157,20 @@ test("decodes the authoritative Codex rate-limit bucket and rejects invalid perc
   }}, 1);
   assert.deepEqual(limits, { planType: "plus", limitName: "Codex", primary: { usedPercent: 31, resetsAt: 1730948100, windowDurationMins: 15 }, secondary: { usedPercent: 45 }, capturedAt: 1 });
   assert.equal(decodeRateLimits({ rateLimits: { primary: { usedPercent: 101 } } }), undefined);
+});
+
+test("uses an explicit app-server command without relying on the shell PATH", () => {
+  assert.equal(resolveAppServerCommand("C:\\Codex\\codex.exe", "missing-directory"), "C:\\Codex\\codex.exe");
+});
+
+test("auto-detects the Codex executable bundled with the official Windows extension", async () => {
+  const root = join(tmpdir(), `codex-usage-command-${Date.now()}`);
+  const executable = join(root, "openai.chatgpt-1-win32-x64", "bin", "windows-x86_64", "codex.exe");
+  await mkdir(join(root, "openai.chatgpt-1-win32-x64", "bin", "windows-x86_64"), { recursive: true });
+  try {
+    await writeFile(executable, "");
+    assert.equal(resolveAppServerCommand("", root, "win32"), executable);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

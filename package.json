@@ -146,8 +146,8 @@
         },
         "codexUsage.appServerCommand": {
           "type": "string",
-          "default": "codex",
-          "description": "Codex executable used only for the opt-in app-server integration."
+          "default": "",
+          "description": "Optional path to the Codex executable used for app-server integration. Leave empty to auto-detect the official VS Code Codex installation on Windows."
         }
       }
     }
