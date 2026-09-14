@@ -33,6 +33,11 @@ export function rateLimitLabel(window: RateLimitWindow | undefined, fallback: st
   return `${window.windowDurationMins}-minute limit`;
 }
 
+/** Presents the authoritative used percentage without implying it is remaining quota. */
+export function formatRateLimitUsage(window: RateLimitWindow): string {
+  return `${window.usedPercent}% used · ${100 - window.usedPercent}% remaining`;
+}
+
 /** Decodes only documented app-server data; unknown fields and methods are ignored. */
 export function decodeThreadUsageUpdate(message: unknown): AppServerThreadUsageUpdate | undefined {
   const envelope = record(message);

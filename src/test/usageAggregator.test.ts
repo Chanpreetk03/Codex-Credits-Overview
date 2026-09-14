@@ -8,7 +8,7 @@ import { normalizeEvent } from "../codex/eventNormalizer";
 import { buildTurnTimeline } from "../codex/turnTimeline";
 import { ThreadCatalog } from "../codex/threadCatalog";
 import { parseAppendedRollout } from "../codex/rolloutParser";
-import { decodeRateLimits, decodeThreadUsageUpdate, rateLimitLabel } from "../codex/appServerProtocol";
+import { decodeRateLimits, decodeThreadUsageUpdate, formatRateLimitUsage, rateLimitLabel } from "../codex/appServerProtocol";
 import { resolveAppServerCommand } from "../codex/appServerCommand";
 
 test("uses Codex-reported turn and thread totals without double counting subsets", async () => {
@@ -162,6 +162,11 @@ test("decodes the authoritative Codex rate-limit bucket and rejects invalid perc
 test("uses human-readable names for Codex's standard account windows", () => {
   assert.equal(rateLimitLabel({ usedPercent: 1, windowDurationMins: 300 }, "Primary"), "5-hour limit");
   assert.equal(rateLimitLabel({ usedPercent: 1, windowDurationMins: 10_080 }, "Secondary"), "Weekly limit");
+});
+
+test("labels app-server rate limits as used and remaining", () => {
+  assert.equal(formatRateLimitUsage({ usedPercent: 1 }), "1% used · 99% remaining");
+  assert.equal(formatRateLimitUsage({ usedPercent: 53 }), "53% used · 47% remaining");
 });
 
 test("uses an explicit app-server command without relying on the shell PATH", () => {

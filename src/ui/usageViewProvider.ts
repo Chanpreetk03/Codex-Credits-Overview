@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
+import { randomBytes } from "node:crypto";
 import { SessionReport } from "../codex/types";
 import { formatTokens } from "../codex/usageAggregator";
-import { AppServerRateLimits, RateLimitWindow, rateLimitLabel } from "../codex/appServerProtocol";
+import { AppServerRateLimits, RateLimitWindow, formatRateLimitUsage, rateLimitLabel } from "../codex/appServerProtocol";
 
 export const USAGE_VIEW_ID = "codexUsage.dashboard";
 
@@ -32,7 +33,7 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
 
   resolveWebviewView(view: vscode.WebviewView): void {
     this.view = view;
-    view.webview.options = { enableScripts: false };
+    view.webview.options = { enableScripts: true };
     this.render();
   }
 
@@ -84,10 +85,11 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
   private rateLimitMetric(label: string, window: RateLimitWindow | undefined): string {
     if (!window) return "";
     const reset = window.resetsAt ? ` · ${formatReset(window.resetsAt)} (${escapeHtml(new Date(window.resetsAt * 1_000).toLocaleString())})` : "";
-    return `<div class="metric"><span>${rateLimitLabel(window, label)}</span><strong>${window.usedPercent}%</strong></div><p class="muted">${reset}</p>`;
+    return `<div class="metric rate-limit-metric"><span>${rateLimitLabel(window, label)}</span><strong>${formatRateLimitUsage(window)}</strong></div><p class="muted rate-limit-reset">${reset}</p>`;
   }
 
   private page(body: string): string {
-    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>html{scrollbar-color:var(--vscode-scrollbarSlider-background) transparent;scrollbar-width:thin}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--vscode-scrollbarSlider-background)}body{color:var(--vscode-foreground);font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);margin:0;padding:10px 12px}section{border-bottom:1px solid var(--vscode-widget-border);padding:0 0 10px;margin:0 0 10px}h2{font-size:11px;letter-spacing:.08em;margin:0 0 7px;text-transform:uppercase}p{margin:4px 0}.model{font-weight:600}.muted,.source,.privacy{color:var(--vscode-descriptionForeground);font-size:12px}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:4px;margin-top:8px}.metric{display:flex;gap:6px;justify-content:space-between;min-width:0}.metric span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.metric strong{font-variant-numeric:tabular-nums;white-space:nowrap}.source{margin-top:8px}.privacy,.activity{line-height:1.35}.activity{margin:0 0 10px}.empty{color:var(--vscode-descriptionForeground);line-height:1.5}.context{font-weight:600}</style></head><body>${body}</body></html>`;
+    const nonce = randomBytes(16).toString("base64");
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'"><style>html{scrollbar-color:var(--vscode-scrollbarSlider-background) transparent;scrollbar-width:thin}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--vscode-scrollbarSlider-background)}body{color:var(--vscode-foreground);font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);margin:0;padding:10px 12px}section{border-bottom:1px solid var(--vscode-widget-border);padding:0 0 10px;margin:0 0 10px}h2{font-size:11px;letter-spacing:.08em;margin:0 0 7px;text-transform:uppercase}p{margin:4px 0}.model{font-weight:600}.muted,.source,.privacy{color:var(--vscode-descriptionForeground);font-size:12px}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:4px;margin-top:8px}.metric{display:flex;gap:6px;justify-content:space-between;min-width:0}.metric span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.metric strong{font-variant-numeric:tabular-nums;white-space:nowrap}.rate-limit-metric{grid-column:1/-1}.rate-limit-reset{grid-column:1/-1;margin-top:-2px}.source{margin-top:8px}.privacy,.activity{line-height:1.35}.activity{margin:0 0 10px}.empty{color:var(--vscode-descriptionForeground);line-height:1.5}.context{font-weight:600}@media (min-width:480px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}</style></head><body>${body}<script nonce="${nonce}">window.scrollTo(0, 0);</script></body></html>`;
   }
 }
