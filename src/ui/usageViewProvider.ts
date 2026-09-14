@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { SessionReport } from "../codex/types";
 import { formatTokens } from "../codex/usageAggregator";
-import { AppServerRateLimits, RateLimitWindow } from "../codex/appServerProtocol";
+import { AppServerRateLimits, RateLimitWindow, rateLimitLabel } from "../codex/appServerProtocol";
 
 export const USAGE_VIEW_ID = "codexUsage.dashboard";
 
@@ -67,14 +67,13 @@ export class UsageViewProvider implements vscode.WebviewViewProvider {
   private rateLimitBody(): string {
     if (!this.rateLimits) return "<p class=\"muted\">Unavailable. Enable app-server integration to request authoritative account limits.</p>";
     const label = [this.rateLimits.limitName, this.rateLimits.planType].filter((value): value is string => Boolean(value)).map(escapeHtml).join(" · ");
-    return `<p class="model">${label || "Codex account"}</p><div class="metrics">${this.rateLimitMetric("Primary", this.rateLimits.primary)}${this.rateLimitMetric("Secondary", this.rateLimits.secondary)}</div><p class="source">Codex app-server · authoritative account telemetry</p>`;
+    return `<p class="model">${label || "Codex account"}</p><div class="metrics">${this.rateLimitMetric("5-hour limit", this.rateLimits.primary)}${this.rateLimitMetric("Weekly limit", this.rateLimits.secondary)}</div><p class="source">Codex app-server · authoritative account telemetry</p>`;
   }
 
   private rateLimitMetric(label: string, window: RateLimitWindow | undefined): string {
     if (!window) return "";
     const reset = window.resetsAt ? ` · resets ${escapeHtml(new Date(window.resetsAt * 1000).toLocaleString())}` : "";
-    const duration = window.windowDurationMins ? ` (${window.windowDurationMins} min)` : "";
-    return `<div class="metric"><span>${label}${duration}</span><strong>${window.usedPercent}%</strong></div><p class="muted">${reset}</p>`;
+    return `<div class="metric"><span>${rateLimitLabel(window, label)}</span><strong>${window.usedPercent}%</strong></div><p class="muted">${reset}</p>`;
   }
 
   private page(body: string): string {

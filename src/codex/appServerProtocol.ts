@@ -25,6 +25,14 @@ export interface AppServerRateLimits {
   capturedAt: number;
 }
 
+export function rateLimitLabel(window: RateLimitWindow | undefined, fallback: string): string {
+  if (!window?.windowDurationMins) return fallback;
+  if (window.windowDurationMins === 300) return "5-hour limit";
+  if (window.windowDurationMins === 10_080) return "Weekly limit";
+  if (window.windowDurationMins % 60 === 0) return `${window.windowDurationMins / 60}-hour limit`;
+  return `${window.windowDurationMins}-minute limit`;
+}
+
 /** Decodes only documented app-server data; unknown fields and methods are ignored. */
 export function decodeThreadUsageUpdate(message: unknown): AppServerThreadUsageUpdate | undefined {
   const envelope = record(message);
