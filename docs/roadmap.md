@@ -24,6 +24,13 @@ labelled as such.
 
 2. **Better local exploration**
    - Sort and filter sessions by recency, total raw usage, model, and project.
+   - Replace session-ID-first rows with user-friendly session titles. Prefer a
+     Codex-provided local thread name when available; otherwise show a safe
+     fallback such as repository/folder name plus date and model. Keep the
+     short session ID only in the tooltip and a copy-details action.
+   - Keep prompt-derived titles opt-in, because they can contain sensitive
+     content. Provide a setting to choose between private fallback titles,
+     local Codex titles, and prompt previews.
    - Add model and workspace/project breakdowns based only on locally recorded
      metadata.
    - Export selected local metadata and token totals to CSV or JSON on demand.
